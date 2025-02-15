@@ -1,0 +1,38 @@
+﻿@{
+    ViewData["Title"] = "Начало";
+}
+
+@if (User.IsInRole("Admin"))
+{
+    <h1>Администраторски панел</h1>
+    <ul>
+        <li><a asp-controller="Books" asp-action="Index">Управление на книги</a></li>
+        <li><a asp-controller="LibraryUsers" asp-action="Index">Управление на потребители</a></li>
+        <li><a asp-controller="Borrowings" asp-action="Index">Заемани книги</a></li>
+        <li><a asp-controller="LoginHistory" asp-action="Index">История на влизанията</a></li>
+    </ul>
+}
+else if (User.Identity.IsAuthenticated)
+{
+    <h1>Моето табло</h1>
+    <ul>
+        <li><a asp-controller="Books" asp-action="Index">Каталог с книги</a></li>
+        <li><a asp-controller="Borrowings" asp-action="Index">Моите заети книги</a></li>
+    </ul>
+}
+
+@if (User.Identity.IsAuthenticated)
+{
+    <form asp-area="Identity" asp-page="/Account/Logout" method="post" style="display:inline;">
+        <button type="submit" class="btn btn-danger">Изход</button>
+    </form>
+}
+else
+{
+    <h1>Добре дошли в библиотеката</h1>
+
+    <ul>
+        <li><a asp-controller="Books" asp-action="Index">Каталог с книги</a></li>
+    </ul>
+    <p><a asp-area="Identity" asp-page="/Account/Login" class="btn btn-danger">Вход</a></p>
+}

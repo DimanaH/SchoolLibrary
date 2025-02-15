@@ -1,0 +1,91 @@
+﻿@model IEnumerable<SchoolLibrary.Models.Borrowing>
+@using Microsoft.AspNetCore.Identity
+@inject UserManager<LibraryUser> UserManager
+@inject SignInManager<LibraryUser> SignInManager
+
+@{
+    ViewData["Title"] = "Заемки";
+    var isAdmin = ViewData["IsAdmin"] as bool? ?? false;
+    var searchString = ViewData["SearchString"] as string ?? "";
+}
+
+<h1>Заемки</h1>
+
+<!-- 🔍 Поле за търсене -->
+<form asp-action="Index" method="get">
+    <div class="form-group">
+        <input type="text" name="searchString" class="form-control" placeholder="Search borrowings..." value="@searchString">
+    </div>
+    <button type="submit" class="btn btn-primary">Search</button>
+    <a asp-action="Index" class="btn btn-secondary">Clear</a>
+</form>
+<hr />
+@if (isAdmin)
+{
+    <p>
+        <a asp-action="Create" class="btn btn-primary">Create New</a>
+    </p>
+}
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.Book)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.LibraryUser)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.BorrowDate)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.DueDate)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.ReturnDate)
+            </th>
+
+                <th>Actions</th>
+
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>
+                    @($"{item.Book.Title} ({item.Book.Author}, {item.Book.InventoryNumber})")
+                </td>
+                <td>
+                    @($"{item.LibraryUser.FirstName} {item.LibraryUser.LastName} ({item.LibraryUser.Email})")
+                </td>
+                <td>@item.BorrowDate.ToShortDateString()</td>
+                <td>@item.DueDate.ToShortDateString()</td>
+                <td>@(item.ReturnDate?.ToShortDateString() ?? "Not Returned")</td>
+
+                @if (isAdmin)
+                {
+                    <td>
+                        <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
+                        <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
+                        <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
+                        @if (item.ReturnDate == null)
+                        {
+                            <form asp-action="Return" method="post" style="display:inline;">
+                                <input type="hidden" name="id" value="@item.Id" />
+                                <button type="submit" class="btn btn-success btn-sm">Return</button>
+                            </form>
+                        }
+                    </td>
+                }
+                @if (!isAdmin)
+                {
+                    <td>
+                        <a asp-action="Details" asp-route-id="@item.Id">Details</a>
+                    </td>
+                }
+            </tr>
+        }
+    </tbody>
+</table>

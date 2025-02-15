@@ -1,0 +1,53 @@
+﻿@model SchoolLibrary.Models.Borrowing
+
+@{
+    ViewData["Title"] = "Изтриване заемка";
+}
+
+<h1>Изтриване</h1>
+
+<h3>Сигурни ли сте, че изкате да изтриете това?</h3>
+<div>
+    <h4>Заемка</h4>
+    <hr />
+    <dl class="row">
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Book)
+        </dt>
+        <dd class="col-sm-10">
+            @($"{Model.Book.Title} ({Model.Book.Author}, {Model.Book.InventoryNumber})")
+        </dd>
+
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.LibraryUser)
+        </dt>
+        <dd class="col-sm-10">
+            @($"{Model.LibraryUser.FirstName} {Model.LibraryUser.LastName} ({Model.LibraryUser.Email})")
+        </dd>
+
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.BorrowDate)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.BorrowDate)
+        </dd>
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.DueDate)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.DueDate)
+        </dd>
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.ReturnDate)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.ReturnDate)
+        </dd>
+    </dl>
+    
+    <form asp-action="Delete">
+        <input type="hidden" asp-for="Id" />
+        <input type="submit" value="Delete" class="btn btn-danger" /> |
+        <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+    </form>
+</div>

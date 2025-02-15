@@ -1,0 +1,14 @@
+﻿@{
+    ViewData["Title"] = "Моето табло";
+}
+
+<h1>Моето табло</h1>
+
+<ul>
+    <li><a asp-controller="Books" asp-action="Index">Каталог с книги</a></li>
+    <li><a asp-controller="Borrowings" asp-action="Index">Моите заети книги</a></li>
+</ul>
+
+<form asp-area="Identity" asp-page="/Account/Logout" method="post" style="display:inline;">
+    <button type="submit" class="btn btn-danger">Изход</button>
+</form>

@@ -1,0 +1,49 @@
+﻿@model IEnumerable<SchoolLibrary.Models.LoginHistory>
+
+@{
+    ViewData["Title"] = "История на влизанията";
+}
+
+<h1>История на влизанията</h1>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.LibraryUser)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.LoginTime)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.LogoutTime)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.IPAddress)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.LibraryUser.UserName)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.LoginTime)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.LogoutTime)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.IPAddress)
+            </td>
+            <td>
+                <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
+                <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>

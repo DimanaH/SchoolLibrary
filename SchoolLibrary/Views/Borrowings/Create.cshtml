@@ -1,0 +1,61 @@
+﻿@model SchoolLibrary.Models.Borrowing
+
+@{
+    ViewData["Title"] = "Създаване заемка";
+    var defaultBorrowDate = DateTime.Now;
+    var defaultDueDate = DateTime.Now.AddDays(30);
+}
+
+<h1>Създаване</h1>
+
+<h4>Заемка</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-group">
+                <label asp-for="BookId" class="control-label">Изберете книга</label>
+                <select asp-for="BookId" class="form-control"
+                        asp-items="@(ViewData["Books"] as SelectList)">
+                    <option value="">-- Изберете книга --</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="LibraryUserId" class="control-label">Изберете потребител</label>
+                <select asp-for="LibraryUserId" class="form-control"
+                        asp-items="@(ViewData["Users"] as SelectList)">
+                    <option value="">-- Изберете потребител --</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="BorrowDate" class="control-label"></label>
+                <input asp-for="BorrowDate" class="form-control" value="@defaultBorrowDate.ToString("yyyy-MM-ddTHH:mm:ss")" />
+                <span asp-validation-for="BorrowDate" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="DueDate" class="control-label"></label>
+                <input asp-for="DueDate" class="form-control" value="@defaultDueDate.ToString("yyyy-MM-ddTHH:mm:ss")" />
+                <span asp-validation-for="DueDate" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="ReturnDate" class="control-label"></label>
+                <input asp-for="ReturnDate" class="form-control" />
+                <span asp-validation-for="ReturnDate" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Create" class="btn btn-primary" /> | 
+                <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}
+

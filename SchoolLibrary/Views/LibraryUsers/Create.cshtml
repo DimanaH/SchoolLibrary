@@ -1,0 +1,129 @@
+﻿@model SchoolLibrary.Models.LibraryUser
+
+@{
+    ViewData["Title"] = "Създаване потребител";
+    var defaultRegistrationDate = DateTime.Now;
+}
+
+<h1>Създаване</h1>
+
+<h4>Потребител</h4>
+<hr />
+@if (!ViewData.ModelState.IsValid)
+{
+    <div class="alert alert-danger">
+        <ul>
+            @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+            {
+                <li>@error.ErrorMessage</li>
+            }
+        </ul>
+    </div>
+}
+
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Create">
+            <div class="form-group">
+                <label asp-for="FirstName" class="control-label"></label>
+                <input asp-for="FirstName" class="form-control" />
+                <span asp-validation-for="FirstName" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="LastName" class="control-label"></label>
+                <input asp-for="LastName" class="form-control" />
+                <span asp-validation-for="LastName" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Email" class="control-label"></label>
+                <input asp-for="Email" class="form-control" />
+                <span asp-validation-for="Email" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Phone" class="control-label"></label>
+                <input asp-for="Phone" class="form-control" />
+                <span asp-validation-for="Phone" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="BirthDate" class="control-label"></label>
+                <input asp-for="BirthDate" type="date" class="form-control" />
+                <span asp-validation-for="BirthDate" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="RegistrationDate" class="control-label"></label>
+                <input asp-for="RegistrationDate" class="form-control" value="@defaultRegistrationDate.ToString("yyyy-MM-ddTHH:mm:ss")" />
+                <span asp-validation-for="RegistrationDate" class="text-danger"></span>
+            </div>
+
+            <!-- Поле за парола -->
+            <div class="form-group">
+                <label for="password" class="control-label">Password</label>
+                <input type="password" id="password" name="password" class="form-control" required />
+                <span id="passwordHelp" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label for="confirmPassword" class="control-label">Confirm Password</label>
+                <input type="password" id="confirmPassword" name="confirmPassword" class="form-control" required />
+                <span id="confirmPasswordError" class="text-danger"></span>
+            </div>
+
+            <!-- Избор на роля -->
+            <div class="form-group">
+                <label for="Role" class="control-label">Role</label>
+                <select id="Role" name="Role" class="form-control">
+                    <option value="Student" selected>Student</option>
+                    <option value="Teacher">Teacher</option>
+                    <option value="Admin">Admin</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <input type="submit" value="Create" class="btn btn-primary" /> | 
+                <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}
+<script>
+    document.getElementById("password").addEventListener("input", function () {
+        var password = this.value;
+        var message = "";
+
+        if (password.length < 6) {
+            message += "Minimum 6 characters required. ";
+        }
+        if (!/[A-Z]/.test(password)) {
+            message += "At least one uppercase letter required. ";
+        }
+        if (!/[a-z]/.test(password)) {
+            message += "At least one lowercase letter required. ";
+        }
+        if (!/[0-9]/.test(password)) {
+            message += "At least one number required. ";
+        }
+        if (!/[\W]/.test(password)) {
+            message += "At least one special character required. ";
+        }
+
+        document.getElementById("passwordHelp").textContent = message;
+    });
+
+    document.getElementById("confirmPassword").addEventListener("input", function () {
+        var password = document.getElementById("password").value;
+        var confirmPassword = this.value;
+
+        if (password !== confirmPassword) {
+            document.getElementById("confirmPasswordError").textContent = "Passwords do not match.";
+        } else {
+            document.getElementById("confirmPasswordError").textContent = "";
+        }
+    });
+</script>
+
