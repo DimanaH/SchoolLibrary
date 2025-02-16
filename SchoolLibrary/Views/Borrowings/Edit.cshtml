@@ -5,29 +5,43 @@
 }
 
 <h1>Редактиране</h1>
-
 <h4>Заемка</h4>
 <hr />
+
 <div class="row">
-    <div class="col-md-4">
+    <div class="col-md-6">
         <form asp-action="Edit">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div asp-validation-summary="All" class="text-danger"></div> <!-- Грешките се показват тук -->
             <input type="hidden" asp-for="Id" />
 
+            <!-- Избор на книга -->
             <div class="form-group">
-                <label asp-for="BookId" class="control-label">Book</label>
-                <select asp-for="BookId" class="form-control"
-                        asp-items="@(ViewData["Books"] as SelectList)">
-                    <option value="">-- Изберете книга --</option>
-                </select>
+                <label for="BookId" class="control-label">Книга</label>
+                <input type="text" id="BookInput" class="form-control" list="BooksList" autocomplete="off"
+                       value="@ViewData["SelectedBookText"]">
+                <input type="hidden" asp-for="BookId" id="BookId">
+                <datalist id="BooksList">
+                    @foreach (var book in ViewData["Books"] as List<SelectListItem>)
+                    {
+                        <option value="@book.Text" data-id="@book.Value"></option>
+                    }
+                </datalist>
+                <span asp-validation-for="BookId" class="text-danger"></span>
             </div>
 
+            <!-- Избор на потребител -->
             <div class="form-group">
-                <label asp-for="LibraryUserId" class="control-label">User</label>
-                <select asp-for="LibraryUserId" class="form-control"
-                        asp-items="@(ViewData["Users"] as SelectList)">
-                    <option value="">-- Изберете потребител --</option>
-                </select>
+                <label for="LibraryUserId" class="control-label">Потребител</label>
+                <input type="text" id="UserInput" class="form-control" list="UsersList" autocomplete="off"
+                       value="@ViewData["SelectedUserText"]">
+                <input type="hidden" asp-for="LibraryUserId" id="LibraryUserId">
+                <datalist id="UsersList">
+                    @foreach (var user in ViewData["Users"] as List<SelectListItem>)
+                    {
+                        <option value="@user.Text" data-id="@user.Value"></option>
+                    }
+                </datalist>
+                <span asp-validation-for="LibraryUserId" class="text-danger"></span>
             </div>
 
             <div class="form-group">
@@ -49,14 +63,31 @@
             </div>
 
             <div class="form-group">
-                <input type="submit" value="Save" class="btn btn-primary" /> |
-                <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+                <input type="submit" value="Запази" class="btn btn-primary" /> |
+                <a asp-action="Index" class="btn btn-secondary">Назад</a>
             </div>
         </form>
     </div>
 </div>
 
 @section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // Избор на книга
+            document.getElementById("BookInput").addEventListener("input", function () {
+                let selectedOption = Array.from(document.getElementById("BooksList").options)
+                    .find(option => option.value === this.value);
+                document.getElementById("BookId").value = selectedOption ? selectedOption.dataset.id : "";
+            });
+
+            // Избор на потребител
+            document.getElementById("UserInput").addEventListener("input", function () {
+                let selectedOption = Array.from(document.getElementById("UsersList").options)
+                    .find(option => option.value === this.value);
+                document.getElementById("LibraryUserId").value = selectedOption ? selectedOption.dataset.id : "";
+            });
+        });
+    </script>
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }

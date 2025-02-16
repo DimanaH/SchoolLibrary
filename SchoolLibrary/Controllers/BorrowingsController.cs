@@ -24,61 +24,62 @@ namespace SchoolLibrary.Controllers
 
         // GET: Borrowings
         [Authorize]
-        public async Task<IActionResult> Index(string searchString)
+        public async Task<IActionResult> Index(string searchString, string statusFilter = "all")
         {
-            var userId = _userManager.GetUserId(User); // ID на текущия потребител
-            var isAdmin = User.IsInRole("Admin"); // Проверка дали е администратор
+            var userId = _userManager.GetUserId(User);
+            var isAdmin = User.IsInRole("Admin");
 
             IQueryable<Borrowing> borrowingsQuery = _context.Borrowings
                 .Include(b => b.Book)
                 .Include(b => b.LibraryUser);
 
-            if (!isAdmin) // Ако не е администратор, вижда само своите заемки
+            if (!isAdmin)
             {
                 borrowingsQuery = borrowingsQuery.Where(b => b.LibraryUserId == userId);
             }
 
-            var borrowingsList = await borrowingsQuery.ToListAsync(); //Зареждаме от базата преди да правим ToString()
+            // 📌 Филтриране по статус (върнати / невърнати)
+            if (statusFilter == "returned")
+            {
+                borrowingsQuery = borrowingsQuery.Where(b => b.ReturnDate != null);
+            }
+            else if (statusFilter == "notReturned")
+            {
+                borrowingsQuery = borrowingsQuery.Where(b => b.ReturnDate == null);
+            }
 
+            var borrowingsList = await borrowingsQuery.ToListAsync();
+
+            // 📌 Търсене в резултатите
             if (!string.IsNullOrEmpty(searchString))
             {
                 borrowingsList = borrowingsList
-                .Where(b =>
-                    (b.Book != null && (
-                        b.Book.Title?.Contains(searchString) == true ||
-                        b.Book.Author?.Contains(searchString) == true ||
-                        b.Book.InventoryNumber?.Contains(searchString) == true
-                    )) ||
-                    (b.LibraryUser != null && (
-                        b.LibraryUser.FirstName?.Contains(searchString) == true ||
-                        b.LibraryUser.LastName?.Contains(searchString) == true ||
-                        b.LibraryUser.UserName?.Contains(searchString) == true
-                    )) ||
-
-                    //Проверяваме дали датите не са null преди да използваме ToString()
-                    (b.BorrowDate != null && (
-                        b.BorrowDate.ToString("d.M").Contains(searchString) ||
-                        b.BorrowDate.ToString("dd.MM").Contains(searchString) ||
-                        b.BorrowDate.ToString("dd.MM.yyyy").Contains(searchString)
-                    )) ||
-                    (b.DueDate != null && (
-                        b.DueDate.ToString("d.M").Contains(searchString) ||
-                        b.DueDate.ToString("dd.MM").Contains(searchString) ||
-                        b.DueDate.ToString("dd.MM.yyyy").Contains(searchString)
-                    )) ||
-                    (b.ReturnDate.HasValue && (
-                        b.ReturnDate.Value.ToString("d.M").Contains(searchString) ||
-                        b.ReturnDate.Value.ToString("dd.MM").Contains(searchString) ||
-                        b.ReturnDate.Value.ToString("dd.MM.yyyy").Contains(searchString)
-                    ))
-                )
-                .ToList();
+                    .Where(b =>
+                        (b.Book != null && (
+                            b.Book.Title?.Contains(searchString, StringComparison.OrdinalIgnoreCase) == true ||
+                            b.Book.Author?.Contains(searchString, StringComparison.OrdinalIgnoreCase) == true ||
+                            b.Book.InventoryNumber?.Contains(searchString, StringComparison.OrdinalIgnoreCase) == true
+                        )) ||
+                        (b.LibraryUser != null && (
+                            b.LibraryUser.FirstName?.Contains(searchString, StringComparison.OrdinalIgnoreCase) == true ||
+                            b.LibraryUser.LastName?.Contains(searchString, StringComparison.OrdinalIgnoreCase) == true ||
+                            b.LibraryUser.UserName?.Contains(searchString, StringComparison.OrdinalIgnoreCase) == true
+                        )) ||
+                        (b.BorrowDate != null && b.BorrowDate.ToString("dd.MM.yyyy").Contains(searchString)) ||
+                        (b.DueDate != null && b.DueDate.ToString("dd.MM.yyyy").Contains(searchString)) ||
+                        (b.ReturnDate.HasValue && b.ReturnDate.Value.ToString("dd.MM.yyyy").Contains(searchString))
+                    )
+                    .ToList();
             }
 
-            ViewData["IsAdmin"] = isAdmin; // Предаваме тази стойност към изгледа
-            ViewData["SearchString"] = searchString; // За да запазим въведената стойност в изгледа
+            // 📌 Запазваме избраните стойности за филтрите
+            ViewData["IsAdmin"] = isAdmin;
+            ViewData["SearchString"] = searchString;
+            ViewData["StatusFilter"] = statusFilter;
+
             return View(borrowingsList);
         }
+
 
         // GET: Borrowings/Create
         [Authorize(Roles = "Admin")]
@@ -109,37 +110,51 @@ namespace SchoolLibrary.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Create(Borrowing borrowing)
         {
-            // Премахваме Book и LibraryUser от ModelState, за да спрем тяхната ненужна валидация
             ModelState.Remove("Book");
             ModelState.Remove("LibraryUser");
+
+            // Проверяваме дали книгата съществува
+            var book = await _context.Books.FindAsync(borrowing.BookId);
+            if (book == null)
+            {
+                ModelState.AddModelError("BookId", "Избраната книга не съществува.");
+            }
+            else if (!book.IsAvailable)
+            {
+                ModelState.AddModelError("BookId", "Тази книга вече е заета.");
+            }
+
+            // Проверяваме дали потребителят съществува
+            var user = await _context.Users.FindAsync(borrowing.LibraryUserId);
+            if (user == null)
+            {
+                ModelState.AddModelError("LibraryUserId", "Избраният потребител не съществува.");
+            }
 
             if (!ModelState.IsValid)
             {
                 ViewData["Books"] = new SelectList(_context.Books
                     .Where(b => b.IsAvailable)
                     .Select(b => new { b.Id, DisplayText = $"{b.Title} ({b.Author} {b.InventoryNumber})" })
-                    .ToList(), "Id", "DisplayText");
+                    .ToList(), "Id", "DisplayText", borrowing.BookId); // Избира последно въведената книга
 
                 ViewData["Users"] = new SelectList(_context.Users
                     .Select(u => new { u.Id, DisplayText = $"{u.FirstName} {u.LastName} ({u.Email})" })
-                    .ToList(), "Id", "DisplayText");
+                    .ToList(), "Id", "DisplayText", borrowing.LibraryUserId); // Избира последния въведен потребител
+
+                ViewData["EnteredBook"] = _context.Books.Where(b => b.Id == borrowing.BookId)
+                    .Select(b => $"{b.Title} ({b.Author} {b.InventoryNumber})").FirstOrDefault();
+
+                ViewData["EnteredUser"] = _context.Users.Where(u => u.Id == borrowing.LibraryUserId)
+                    .Select(u => $"{u.FirstName} {u.LastName} ({u.Email})").FirstOrDefault();
 
                 return View(borrowing);
             }
 
-            // Зареждаме навигационните свойства
-            borrowing.Book = await _context.Books.FindAsync(borrowing.BookId);
-            borrowing.LibraryUser = await _context.Users.FindAsync(borrowing.LibraryUserId);
 
-            if (borrowing.Book == null || !borrowing.Book.IsAvailable)
-            {
-                ModelState.AddModelError("BookId", "Тази книга вече е заета.");
-                return View(borrowing);
-            }
-
-            // Обновяваме състоянието на книгата
-            borrowing.Book.IsAvailable = false;
-            _context.Update(borrowing.Book);
+            // Маркираме книгата като заета
+            book.IsAvailable = false;
+            _context.Update(book);
 
             _context.Add(borrowing);
             await _context.SaveChangesAsync();
@@ -252,15 +267,23 @@ namespace SchoolLibrary.Controllers
                 return NotFound();
             }
 
-            // Зареждаме списъка с книги (всички книги, дори заети)
-            ViewData["Books"] = new SelectList(_context.Books
-                .Select(b => new { b.Id, DisplayText = $"{b.Title} ({b.Author}, {b.InventoryNumber})" })
-                .ToList(), "Id", "DisplayText", borrowing.BookId);
+            // Запазване на текущо избраните текстове за книгата и потребителя
+            ViewData["SelectedBookText"] = borrowing.Book != null ? $"{borrowing.Book.Title} ({borrowing.Book.Author}, {borrowing.Book.InventoryNumber})" : "";
+            ViewData["SelectedUserText"] = borrowing.LibraryUser != null ? $"{borrowing.LibraryUser.FirstName} {borrowing.LibraryUser.LastName} ({borrowing.LibraryUser.Email})" : "";
 
-            // Зареждаме списъка с потребители
-            ViewData["Users"] = new SelectList(_context.Users
-                .Select(u => new { u.Id, DisplayText = $"{u.Email} ({u.FirstName} {u.LastName})" })
-                .ToList(), "Id", "DisplayText", borrowing.LibraryUserId);
+            ViewData["Books"] = _context.Books
+                .Select(b => new SelectListItem
+                {
+                    Value = b.Id.ToString(),
+                    Text = $"{b.Title} ({b.Author}, {b.InventoryNumber})"
+                }).ToList();
+
+            ViewData["Users"] = _context.Users
+                .Select(u => new SelectListItem
+                {
+                    Value = u.Id,
+                    Text = $"{u.FirstName} {u.LastName} ({u.Email})"
+                }).ToList();
 
             return View(borrowing);
         }
@@ -282,17 +305,31 @@ namespace SchoolLibrary.Controllers
 
             if (!ModelState.IsValid)
             {
-                // Презареждаме ViewData списъците, за да не загубим селекциите
-                ViewData["Books"] = new SelectList(_context.Books
-                    .Select(b => new { b.Id, DisplayText = $"{b.Title} ({b.Author}, {b.InventoryNumber})" })
-                    .ToList(), "Id", "DisplayText", borrowing.BookId);
+                ViewData["SelectedBookText"] = _context.Books
+                    .Where(b => b.Id == borrowing.BookId)
+                    .Select(b => $"{b.Title} ({b.Author}, {b.InventoryNumber})").FirstOrDefault();
 
-                ViewData["Users"] = new SelectList(_context.Users
-                    .Select(u => new { u.Id, DisplayText = $"{u.Email} ({u.FirstName} {u.LastName})" })
-                    .ToList(), "Id", "DisplayText", borrowing.LibraryUserId);
+                ViewData["SelectedUserText"] = _context.Users
+                    .Where(u => u.Id == borrowing.LibraryUserId)
+                    .Select(u => $"{u.FirstName} {u.LastName} ({u.Email})").FirstOrDefault();
+
+                ViewData["Books"] = _context.Books
+                    .Select(b => new SelectListItem
+                    {
+                        Value = b.Id.ToString(),
+                        Text = $"{b.Title} ({b.Author}, {b.InventoryNumber})"
+                    }).ToList();
+
+                ViewData["Users"] = _context.Users
+                    .Select(u => new SelectListItem
+                    {
+                        Value = u.Id,
+                        Text = $"{u.FirstName} {u.LastName} ({u.Email})"
+                    }).ToList();
 
                 return View(borrowing);
             }
+
 
             try
             {

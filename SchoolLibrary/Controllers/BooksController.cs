@@ -18,37 +18,54 @@ namespace SchoolLibrary.Controllers
         }
 
         // GET: Books
-        public async Task<IActionResult> Index(string searchString)
+        public async Task<IActionResult> Index(string searchString, string availabilityFilter)
         {
             IQueryable<Book> booksQuery = _context.Books;
 
-            var booksList = await booksQuery.ToListAsync(); //Зареждаме от базата преди да правим ToString()
+            var booksList = await booksQuery.ToListAsync(); // Зареждаме всички книги от базата
 
+            // Приложение на филтъра за наличност
+            if (!string.IsNullOrEmpty(availabilityFilter))
+            {
+                switch (availabilityFilter)
+                {
+                    case "available":
+                        booksList = booksList.Where(b => b.IsAvailable).ToList();
+                        break;
+                    case "borrowed":
+                        booksList = booksList.Where(b => !b.IsAvailable).ToList();
+                        break;
+                }
+            }
+
+            // Филтриране по търсената дума
             if (!string.IsNullOrEmpty(searchString))
             {
                 booksList = booksList
-                .Where(b =>
-                    b.Title.Contains(searchString) ||
-                    b.Author.Contains(searchString) ||
-                    b.ISBN.Contains(searchString) ||
-                    b.Genre.Contains(searchString) ||
-                    b.Publisher.Contains(searchString) ||
-                    b.InventoryNumber.Contains(searchString) ||
-                    b.PublicationYear.ToString().Contains(searchString) ||
-                    (b.DateAdded != null && (
-                        b.DateAdded.ToString("d.M").Contains(searchString) ||
-                        b.DateAdded.ToString("dd.MM").Contains(searchString) ||
-                        b.DateAdded.ToString("dd.MM.yyyy").Contains(searchString)
-                    )) ||
-                    b.Price.ToString().Contains(searchString)
-                )
-                .ToList();
+                    .Where(b =>
+                        b.Title.Contains(searchString, StringComparison.OrdinalIgnoreCase) ||
+                        b.Author.Contains(searchString, StringComparison.OrdinalIgnoreCase) ||
+                        b.ISBN.Contains(searchString, StringComparison.OrdinalIgnoreCase) ||
+                        b.Genre.Contains(searchString, StringComparison.OrdinalIgnoreCase) ||
+                        b.Publisher.Contains(searchString, StringComparison.OrdinalIgnoreCase) ||
+                        b.InventoryNumber.Contains(searchString, StringComparison.OrdinalIgnoreCase) ||
+                        b.PublicationYear.ToString().Contains(searchString) ||
+                        (b.DateAdded != null && (
+                            b.DateAdded.ToString("d.M").Contains(searchString) ||
+                            b.DateAdded.ToString("dd.MM").Contains(searchString) ||
+                            b.DateAdded.ToString("dd.MM.yyyy").Contains(searchString)
+                        )) ||
+                        b.Price.ToString().Contains(searchString)
+                    )
+                    .ToList();
             }
 
-            ViewData["SearchString"] = searchString; // За да запазим стойността в полето за търсене
+            ViewData["SearchString"] = searchString;
+            ViewData["AvailabilityFilter"] = availabilityFilter; // Запазваме избора на филтъра
 
             return View(booksList);
         }
+
 
 
         // GET: Books/Create
