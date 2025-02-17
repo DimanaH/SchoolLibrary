@@ -13,9 +13,9 @@
 
 <!-- 🔍 Поле за търсене -->
 <form asp-action="Index" method="get">
-    <div class="form-group">
-        <input type="text" name="searchString" class="form-control" placeholder="Search borrowings..." value="@searchString" style="display:inline-block; width:84%;">
-        <select name="statusFilter" class="form-control" style="display:inline-block; width:15%;">
+    <div class="form-group search">
+        <input type="text" name="searchString" class="form-control" placeholder="Search borrowings..." value="@searchString" >
+        <select name="statusFilter" class="form-control" >
             <option value="all" selected="@(ViewData["StatusFilter"] as string == "all")">Всички</option>
             <option value="returned" selected="@(ViewData["StatusFilter"] as string == "returned")">Само върнати</option>
             <option value="notReturned" selected="@(ViewData["StatusFilter"] as string == "notReturned")">Само невърнати</option>

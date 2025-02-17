@@ -20,3 +20,18 @@ html {
 body {
   margin-bottom: 60px;
 }
+.search {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    align-items: center;
+}
+.search input {
+    width:78%;
+    display: inline-block;
+}
+.search select {
+    width: 20%;
+    display: inline-block;
+}
